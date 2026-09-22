@@ -22,6 +22,18 @@ function sameTags(left: readonly TagId[], right: readonly TagId[]) {
   return a.every((tag, index) => tag === b[index]);
 }
 
+function GlowField() {
+  return (
+    <div className="glow-field" aria-hidden>
+      <span className="glow-orb glow-orb-a" />
+      <span className="glow-orb glow-orb-b" />
+      <span className="glow-orb glow-orb-c" />
+      <span className="glow-orb glow-orb-d" />
+      <span className="glow-orb glow-orb-e" />
+    </div>
+  );
+}
+
 export function Directory({ seed }: { seed: Creator[] }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef(0);
@@ -100,6 +112,7 @@ export function Directory({ seed }: { seed: Creator[] }) {
   }, [added, overrides, seed]);
 
   const filtering = query.trim().length > 0 || selected.length > 0;
+  const chineseOn = /中文|华语|国内/.test(query);
 
   useEffect(() => {
     const localIds = filtering ? matchCreatorsLocally(creators, query, selected) : [];
@@ -162,6 +175,8 @@ export function Directory({ seed }: { seed: Creator[] }) {
   );
 
   const active = creators.find((creator) => creator.id === activeId) ?? null;
+  const tokenSize = mobile ? 52 : 68;
+  const discSize = mobile ? 60 : 78;
 
   function toggleTag(tag: TagId) {
     setSelected((current) =>
@@ -227,36 +242,32 @@ export function Directory({ seed }: { seed: Creator[] }) {
         ? `Jev 挑出 ${liftedIds.length} 位`
         : `浮上 ${liftedIds.length} 位`;
 
+  const chipClass = (on: boolean) =>
+    cx(
+      "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-[background,color,box-shadow] duration-200",
+      on ? "glass-chip-on" : "glass-chip text-[#1c1c1e]/75",
+    );
+
   return (
-    <div className={cx("relative bg-[#f3f4f6] text-[#1c1c1e]", view === "pile" ? "h-dvh overflow-hidden" : "min-h-dvh")}>
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between px-4 py-4 sm:px-6">
-        <div className="pointer-events-auto">
-          <p className="font-display text-[11px] tracking-[0.18em] text-black/35">PROMPT ATLAS</p>
-          <p className="text-sm font-semibold">提示词星图</p>
-        </div>
-        <div className="pointer-events-auto flex gap-2">
-          <button
-            type="button"
-            onClick={() => setView((current) => (current === "pile" ? "list" : "pile"))}
-            className="rounded-full bg-white px-3 py-1.5 text-sm shadow-sm"
-          >
-            {view === "pile" ? "列表视图" : "回到堆里"}
-          </button>
-          <button
-            type="button"
-            data-testid="open-classify"
-            onClick={() => setDialogOpen(true)}
-            className="rounded-full bg-[#1c1c1e] px-3 py-1.5 text-sm text-white"
-          >
-            收录
-          </button>
+    <div
+      className={cx(
+        "relative text-[#1c1c1e]",
+        view === "pile" ? "h-dvh overflow-hidden" : "min-h-dvh pb-28",
+      )}
+    >
+      <GlowField />
+
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between px-4 py-4 sm:px-6">
+        <div className="pointer-events-auto glass rounded-[28px] px-4 py-2.5">
+          <p className="text-[10px] font-semibold tracking-[0.2em] text-black/35">PROMPT ATLAS</p>
+          <p className="text-[15px] font-semibold tracking-tight">提示词星图</p>
         </div>
       </header>
 
       <div
         className={cx(
-          "z-30 mx-auto w-[min(34rem,calc(100%-2rem))]",
-          view === "pile" ? "absolute left-1/2 top-[15%] -translate-x-1/2" : "relative px-0 pt-24",
+          "relative z-30 mx-auto w-[min(36rem,calc(100%-2rem))]",
+          view === "pile" ? "absolute left-1/2 top-[13%] -translate-x-1/2" : "pt-24",
         )}
       >
         <label className="relative block">
@@ -266,47 +277,39 @@ export function Directory({ seed }: { seed: Creator[] }) {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={EXAMPLES[placeholderIndex % EXAMPLES.length]}
-            className="w-full rounded-2xl border border-black/8 bg-white px-5 py-3.5 pr-12 text-center text-base shadow-[0_10px_40px_rgba(20,20,20,0.06)] outline-none placeholder:text-black/28 focus:border-black/20"
+            className="glass w-full rounded-[999px] px-6 py-4 pr-14 text-center text-[15px] font-medium outline-none placeholder:text-black/30 focus:ring-2 focus:ring-white/50"
           />
           {query ? (
             <button
               type="button"
               aria-label="清除搜索"
               onClick={() => setQuery("")}
-              className="absolute top-1/2 right-3 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-black/40 hover:bg-black/5"
+              className="glass-chip absolute top-1/2 right-3 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-black/45"
             >
               ×
             </button>
           ) : null}
         </label>
 
-        <div className="tag-scroll mt-3 flex justify-center gap-1.5 overflow-x-auto pb-1">
+        <div className="tag-scroll mt-3.5 flex justify-center gap-2 overflow-x-auto pb-1">
           <button
             type="button"
             data-testid="tag-all"
-            aria-pressed={selected.length === 0 && !/中文|华语|国内/.test(query)}
+            aria-pressed={selected.length === 0 && !chineseOn}
             onClick={() => {
               setSelected([]);
-              if (/中文|华语|国内/.test(query)) setQuery("");
+              if (chineseOn) setQuery("");
             }}
-            className={cx(
-              "shrink-0 rounded-full px-3 py-1 text-sm",
-              selected.length === 0 && !/中文|华语|国内/.test(query)
-                ? "bg-[#1c1c1e] text-white"
-                : "bg-white text-black/70 shadow-sm",
-            )}
+            className={chipClass(selected.length === 0 && !chineseOn)}
           >
             全部
           </button>
           <button
             type="button"
             data-testid="chip-zh"
-            aria-pressed={/中文|华语|国内/.test(query)}
+            aria-pressed={chineseOn}
             onClick={() => setQuery((current) => (/中文|华语|国内/.test(current) ? "" : "中文博主"))}
-            className={cx(
-              "shrink-0 rounded-full px-3 py-1 text-sm",
-              /中文|华语|国内/.test(query) ? "bg-[#1c1c1e] text-white" : "bg-white text-black/70 shadow-sm",
-            )}
+            className={chipClass(chineseOn)}
           >
             中文
           </button>
@@ -319,17 +322,17 @@ export function Directory({ seed }: { seed: Creator[] }) {
                 data-testid={`tag-${tag.id}`}
                 aria-pressed={on}
                 onClick={() => toggleTag(tag.id)}
-                className={cx(
-                  "shrink-0 rounded-full px-3 py-1 text-sm",
-                  on ? "bg-[#1c1c1e] text-white" : "bg-white text-black/70 shadow-sm",
-                )}
+                className={chipClass(on)}
               >
                 {tag.label}
               </button>
             );
           })}
         </div>
-        <p data-testid="result-count" className="mt-2 text-center text-xs text-black/40">
+        <p
+          data-testid="result-count"
+          className="mt-3 text-center text-xs font-medium text-black/40"
+        >
           {statusText}
           {filtering ? " · 点头像看简介" : " · 输入或点标签，对上的人会浮上来"}
         </p>
@@ -342,6 +345,7 @@ export function Directory({ seed }: { seed: Creator[] }) {
                 const lifted = filtering && liftedIds.includes(creator.id);
                 const pose = (lifted ? floated.get(creator.id) : pile.get(creator.id)) ?? pile.get(creator.id);
                 if (!pose) return null;
+                const offset = (discSize - tokenSize) / 2;
                 return (
                   <button
                     key={creator.id}
@@ -352,37 +356,47 @@ export function Directory({ seed }: { seed: Creator[] }) {
                     aria-label={`${creator.name} @${creator.handle}`}
                     onClick={() => setActiveId(creator.id)}
                     className={cx(
-                      "absolute top-0 left-0 overflow-hidden rounded-full border-2 border-white shadow-[0_10px_18px_rgba(0,0,0,0.16)]",
-                      filtering && !lifted && "opacity-40 saturate-50",
+                      "avatar-disc absolute top-0 left-0 grid place-items-center rounded-full p-[3px]",
+                      lifted && "avatar-disc-lifted",
+                      filtering && !lifted && "opacity-35 saturate-50",
                     )}
                     style={{
-                      width: mobile ? 52 : 68,
-                      height: mobile ? 52 : 68,
-                      transform: `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg) scale(${pose.scale})`,
+                      width: discSize,
+                      height: discSize,
+                      transform: `translate3d(${pose.x - offset}px, ${pose.y - offset}px, 0) rotate(${pose.rotate}deg) scale(${pose.scale})`,
                       zIndex: pose.z,
-                      transition: reducedMotion ? "none" : "transform 720ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease",
+                      transition: reducedMotion
+                        ? "none"
+                        : "transform 720ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease, box-shadow 320ms ease",
                     }}
                   >
-                    <AvatarToken name={creator.name} handle={creator.handle} />
+                    <span
+                      className="overflow-hidden rounded-full"
+                      style={{ width: tokenSize, height: tokenSize }}
+                    >
+                      <AvatarToken name={creator.name} handle={creator.handle} />
+                    </span>
                   </button>
                 );
               })
             : null}
         </div>
       ) : (
-        <ul className="mx-auto grid max-w-3xl gap-2 px-4 pt-4 pb-16">
+        <ul className="relative z-20 mx-auto grid max-w-3xl gap-2.5 px-4 pt-4 pb-8">
           {(filtering ? creators.filter((creator) => liftedIds.includes(creator.id)) : creators).map((creator) => (
             <li key={creator.id}>
               <button
                 type="button"
                 onClick={() => setActiveId(creator.id)}
-                className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-left shadow-sm"
+                className="glass flex w-full items-center gap-3 rounded-[28px] px-3.5 py-3 text-left"
               >
-                <span className="h-11 w-11 overflow-hidden rounded-full">
-                  <AvatarToken name={creator.name} handle={creator.handle} />
+                <span className="avatar-disc h-12 w-12 overflow-hidden rounded-full p-[2px]">
+                  <span className="block h-full w-full overflow-hidden rounded-full">
+                    <AvatarToken name={creator.name} handle={creator.handle} />
+                  </span>
                 </span>
                 <span className="min-w-0">
-                  <span className="block truncate font-medium">{creator.name}</span>
+                  <span className="block truncate font-semibold tracking-tight">{creator.name}</span>
                   <span className="block truncate text-sm text-black/45">
                     @{creator.handle} · {creator.sample ? "示例" : "真实账号"}
                   </span>
@@ -395,6 +409,30 @@ export function Directory({ seed }: { seed: Creator[] }) {
           ) : null}
         </ul>
       )}
+
+      <nav className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
+        <div className="pointer-events-auto glass flex items-center gap-2 rounded-[999px] p-2 pl-3">
+          <div className="hidden px-2 sm:block">
+            <p className="text-[10px] font-semibold tracking-[0.16em] text-black/35">ATLAS</p>
+            <p className="text-xs font-medium text-black/55">堆里找提示</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setView((current) => (current === "pile" ? "list" : "pile"))}
+            className="glass-chip rounded-full px-4 py-2.5 text-sm font-medium text-[#1c1c1e]/80"
+          >
+            {view === "pile" ? "列表视图" : "回到堆里"}
+          </button>
+          <button
+            type="button"
+            data-testid="open-classify"
+            onClick={() => setDialogOpen(true)}
+            className="rounded-full bg-[rgba(28,28,30,0.88)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(20,20,30,0.22)]"
+          >
+            收录
+          </button>
+        </div>
+      </nav>
 
       {active ? (
         <CreatorDetail

@@ -39,40 +39,55 @@ export function CreatorDetail({
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center">
-      <button type="button" aria-label="关闭" className="absolute inset-0 bg-black/30" onClick={onClose} />
+      <button
+        type="button"
+        aria-label="关闭"
+        className="absolute inset-0 bg-[rgba(28,28,40,0.28)] backdrop-blur-[2px]"
+        onClick={onClose}
+      />
       <article
         role="dialog"
         aria-modal="true"
         aria-labelledby="creator-detail-title"
-        className="relative z-10 w-full max-w-md rounded-3xl bg-white p-5 shadow-[0_24px_80px_rgba(0,0,0,0.18)]"
+        className="glass-strong relative z-10 w-full max-w-md rounded-[36px] p-5 sm:p-6"
       >
         <div className="flex items-start gap-3">
-          <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-white shadow-md">
-            <AvatarToken name={creator.name} handle={creator.handle} />
+          <div className="avatar-disc-lifted avatar-disc h-[4.5rem] w-[4.5rem] overflow-hidden rounded-full p-[3px]">
+            <div className="h-full w-full overflow-hidden rounded-full">
+              <AvatarToken name={creator.name} handle={creator.handle} />
+            </div>
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h2 id="creator-detail-title" className="truncate text-xl font-semibold text-[#1c1c1e]">
+              <h2 id="creator-detail-title" className="truncate text-xl font-semibold tracking-tight text-[#1c1c1e]">
                 {creator.name}
               </h2>
               <span
                 className={cx(
-                  "rounded-full px-2 py-0.5 text-[11px]",
-                  creator.sample ? "bg-black/5 text-black/50" : "bg-[#e8f8d4] text-[#3d5c12]",
+                  "rounded-full px-2.5 py-0.5 text-[11px] font-medium",
+                  creator.sample
+                    ? "bg-white/45 text-black/50"
+                    : "bg-[rgba(184,255,74,0.35)] text-[#2f4a12]",
                 )}
               >
                 {creator.sample ? "示例" : "真实账号"}
               </span>
               {creator.locale === "zh" ? (
-                <span className="rounded-full bg-[#e8eef8] px-2 py-0.5 text-[11px] text-[#2a4a7a]">中文</span>
+                <span className="rounded-full bg-[rgba(155,123,255,0.22)] px-2.5 py-0.5 text-[11px] font-medium text-[#3d2f7a]">
+                  中文
+                </span>
               ) : null}
               {creator.source === "local" ? (
-                <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-black/50">本地</span>
+                <span className="rounded-full bg-white/40 px-2.5 py-0.5 text-[11px] text-black/50">本地</span>
               ) : null}
             </div>
-            <p className="text-sm text-black/45">@{creator.handle}</p>
+            <p className="mt-0.5 text-sm text-black/45">@{creator.handle}</p>
           </div>
-          <button type="button" onClick={onClose} className="text-sm text-black/45">
+          <button
+            type="button"
+            onClick={onClose}
+            className="glass-chip rounded-full px-3 py-1 text-sm text-black/50"
+          >
             关闭
           </button>
         </div>
@@ -89,7 +104,10 @@ export function CreatorDetail({
                   type="button"
                   aria-pressed={on}
                   onClick={() => toggle(tag.id)}
-                  className={cx("rounded-full border px-2.5 py-1 text-xs", on ? TAG_TONE[tag.id].on : "border-black/10 text-black/70")}
+                  className={cx(
+                    "rounded-full border px-2.5 py-1 text-xs",
+                    on ? TAG_TONE[tag.id].on : "glass-chip text-black/70",
+                  )}
                 >
                   {tag.label}
                 </button>
@@ -99,7 +117,7 @@ export function CreatorDetail({
         ) : (
           <div className="mt-4 flex flex-wrap gap-1.5">
             {creator.tags.map((tagId) => (
-              <span key={tagId} className="rounded-full border border-black/10 bg-black/[0.03] px-2.5 py-1 text-xs text-black/70">
+              <span key={tagId} className="glass-chip rounded-full px-2.5 py-1 text-xs text-black/70">
                 {tagById(tagId).label}
               </span>
             ))}
@@ -112,7 +130,7 @@ export function CreatorDetail({
             href={`https://x.com/${encodeURIComponent(creator.handle)}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full bg-[#1c1c1e] px-3.5 py-1.5 text-sm text-white"
+            className="rounded-full bg-[rgba(28,28,30,0.9)] px-4 py-2 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(20,20,30,0.2)]"
           >
             在 X 上查看
           </a>
@@ -124,7 +142,7 @@ export function CreatorDetail({
                 onSaveTags(creator.id, draft);
                 setEditing(false);
               }}
-              className="rounded-full bg-[#d6ff4a] px-3.5 py-1.5 text-sm font-medium text-[#1c1c1e]"
+              className="rounded-full bg-[rgba(184,255,74,0.85)] px-4 py-2 text-sm font-semibold text-[#1c1c1e]"
             >
               完成
             </button>
@@ -135,7 +153,7 @@ export function CreatorDetail({
                 setDraft(creator.tags);
                 setEditing(true);
               }}
-              className="rounded-full border border-black/10 px-3.5 py-1.5 text-sm"
+              className="glass-chip rounded-full px-4 py-2 text-sm font-medium"
             >
               改标签
             </button>
@@ -147,7 +165,7 @@ export function CreatorDetail({
                 onResetTags(creator.id);
                 setEditing(false);
               }}
-              className="rounded-full px-3 py-1.5 text-sm text-black/50"
+              className="rounded-full px-3 py-2 text-sm text-black/50"
             >
               恢复默认
             </button>

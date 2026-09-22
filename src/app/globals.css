@@ -1,13 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: var(--font-noto), "WenQuanYi Micro Hei", "Droid Sans Fallback", "PingFang SC",
-    "Microsoft YaHei", sans-serif;
-  --font-display: var(--font-syne), var(--font-noto), sans-serif;
-  --color-ink: #07080c;
-  --color-lime: #d6ff4a;
-  --color-paper: #f4f1ea;
-  --color-mist: #b7b2a8;
+  --font-sans: var(--font-inter), var(--font-noto), "WenQuanYi Micro Hei", "Droid Sans Fallback",
+    "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-display: var(--font-inter), var(--font-noto), system-ui, sans-serif;
+  --color-ink: #1c1c1e;
+  --color-glass: rgba(255, 255, 255, 0.42);
+  --color-glass-strong: rgba(255, 255, 255, 0.58);
+  --color-glass-edge: rgba(255, 255, 255, 0.62);
+  --color-glow-pink: #ff6ad5;
+  --color-glow-orange: #ff9f43;
+  --color-glow-teal: #2ee6c5;
+  --color-glow-violet: #9b7bff;
+  --color-glow-lime: #b8ff4a;
 }
 
 html {
@@ -18,12 +23,171 @@ body {
   min-height: 100vh;
   color: #1c1c1e;
   font-family: var(--font-sans);
-  background: #f3f4f6;
+  background: #f7f6f4;
 }
 
 ::selection {
-  background: #d6ff4a;
+  background: rgba(46, 230, 197, 0.35);
   color: #14160c;
+}
+
+.glass {
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.28));
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 18px 50px rgba(40, 40, 70, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.glass-strong {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.38));
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.66);
+  box-shadow:
+    0 24px 70px rgba(40, 40, 70, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.glass-chip {
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 8px 22px rgba(40, 40, 70, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.glass-chip-on {
+  background: linear-gradient(145deg, rgba(28, 28, 30, 0.88), rgba(28, 28, 30, 0.72));
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  color: #fff;
+  box-shadow:
+    0 10px 28px rgba(20, 20, 30, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.glow-field {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.glow-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(48px);
+  opacity: 0.72;
+  will-change: transform;
+}
+
+.glow-orb-a {
+  width: 42vw;
+  height: 42vw;
+  max-width: 520px;
+  max-height: 520px;
+  top: -8%;
+  left: -6%;
+  background: radial-gradient(circle, #ff6ad5 0%, transparent 68%);
+  animation: glow-drift-a 18s ease-in-out infinite alternate;
+}
+
+.glow-orb-b {
+  width: 38vw;
+  height: 38vw;
+  max-width: 460px;
+  max-height: 460px;
+  top: 8%;
+  right: -10%;
+  background: radial-gradient(circle, #2ee6c5 0%, transparent 70%);
+  animation: glow-drift-b 22s ease-in-out infinite alternate;
+}
+
+.glow-orb-c {
+  width: 46vw;
+  height: 46vw;
+  max-width: 560px;
+  max-height: 560px;
+  bottom: -12%;
+  left: 18%;
+  background: radial-gradient(circle, #ff9f43 0%, transparent 68%);
+  animation: glow-drift-c 20s ease-in-out infinite alternate;
+}
+
+.glow-orb-d {
+  width: 28vw;
+  height: 28vw;
+  max-width: 340px;
+  max-height: 340px;
+  bottom: 18%;
+  right: 12%;
+  background: radial-gradient(circle, #9b7bff 0%, transparent 70%);
+  animation: glow-drift-a 16s ease-in-out infinite alternate-reverse;
+}
+
+.glow-orb-e {
+  width: 24vw;
+  height: 24vw;
+  max-width: 280px;
+  max-height: 280px;
+  top: 42%;
+  left: 42%;
+  background: radial-gradient(circle, #b8ff4a 0%, transparent 72%);
+  opacity: 0.55;
+  animation: glow-drift-b 24s ease-in-out infinite alternate;
+}
+
+@keyframes glow-drift-a {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(4%, 6%, 0) scale(1.08);
+  }
+}
+
+@keyframes glow-drift-b {
+  from {
+    transform: translate3d(0, 0, 0) scale(1.04);
+  }
+  to {
+    transform: translate3d(-5%, 4%, 0) scale(0.96);
+  }
+}
+
+@keyframes glow-drift-c {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(6%, -4%, 0) scale(1.1);
+  }
+}
+
+.avatar-disc {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.22));
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow:
+    0 14px 30px rgba(30, 30, 50, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.avatar-disc-lifted {
+  box-shadow:
+    0 22px 40px rgba(30, 30, 60, 0.22),
+    0 0 0 6px rgba(255, 255, 255, 0.28),
+    0 0 28px rgba(158, 123, 255, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 .tag-scroll {
@@ -37,6 +201,10 @@ body {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .glow-orb {
+    animation: none !important;
   }
 
   *,
