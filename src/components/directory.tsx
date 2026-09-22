@@ -22,19 +22,6 @@ function sameTags(left: readonly TagId[], right: readonly TagId[]) {
   return a.every((tag, index) => tag === b[index]);
 }
 
-function GlowField() {
-  return (
-    <div className="glow-field" aria-hidden>
-      <span className="glow-orb glow-orb-a" />
-      <span className="glow-orb glow-orb-b" />
-      <span className="glow-orb glow-orb-c" />
-      <span className="glow-orb glow-orb-d" />
-      <span className="glow-orb glow-orb-e" />
-      <span className="glow-orb glow-orb-f" />
-    </div>
-  );
-}
-
 export function Directory({ seed }: { seed: Creator[] }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef(0);
@@ -177,7 +164,6 @@ export function Directory({ seed }: { seed: Creator[] }) {
 
   const active = creators.find((creator) => creator.id === activeId) ?? null;
   const tokenSize = mobile ? 52 : 68;
-  const discSize = mobile ? 60 : 78;
 
   function toggleTag(tag: TagId) {
     setSelected((current) =>
@@ -244,34 +230,46 @@ export function Directory({ seed }: { seed: Creator[] }) {
         : `浮上 ${liftedIds.length} 位`;
 
   const chipClass = (on: boolean) =>
-    cx(
-      "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-[background,color,box-shadow] duration-200",
-      on ? "glass-chip-on" : "glass-chip text-[#1c1c1e]/75",
-    );
+    cx("shrink-0 px-3.5 py-1.5 text-sm font-medium transition-colors", on ? "pill-on" : "pill text-[#111]/75");
 
   return (
     <div
       className={cx(
-        "relative text-[#1c1c1e]",
-        view === "pile" ? "h-dvh overflow-hidden" : "min-h-dvh pb-28",
+        "relative bg-[#f4f4f5] text-[#111111]",
+        view === "pile" ? "h-dvh overflow-hidden" : "min-h-dvh pb-24",
       )}
     >
-      <GlowField />
-
       <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between px-4 py-4 sm:px-6">
-        <div className="pointer-events-auto glass rounded-[28px] px-4 py-2.5">
-          <p className="text-[10px] font-semibold tracking-[0.2em] text-black/35">PROMPT ATLAS</p>
+        <div className="pointer-events-auto">
+          <p className="text-[10px] font-semibold tracking-[0.18em] text-[#8a8a8e]">PROMPT ATLAS</p>
           <p className="text-[15px] font-semibold tracking-tight">提示词星图</p>
+        </div>
+        <div className="pointer-events-auto flex gap-2">
+          <button
+            type="button"
+            onClick={() => setView((current) => (current === "pile" ? "list" : "pile"))}
+            className="pill-ghost px-3.5 py-1.5 text-sm font-medium"
+          >
+            {view === "pile" ? "列表视图" : "回到堆里"}
+          </button>
+          <button
+            type="button"
+            data-testid="open-classify"
+            onClick={() => setDialogOpen(true)}
+            className="pill-primary px-3.5 py-1.5 text-sm font-medium"
+          >
+            收录
+          </button>
         </div>
       </header>
 
       <div
         className={cx(
-          "relative z-30 mx-auto w-[min(38rem,calc(100%-1.5rem))]",
-          view === "pile" ? "absolute left-1/2 top-[11%] -translate-x-1/2" : "pt-24",
+          "relative z-30 mx-auto w-[min(36rem,calc(100%-2rem))]",
+          view === "pile" ? "absolute left-1/2 top-[12%] -translate-x-1/2" : "pt-24",
         )}
       >
-        <div className="glass rounded-[40px] px-3 py-3 sm:px-4 sm:py-4">
+        <div className="card p-3 sm:p-4">
           <label className="relative block">
             <span className="sr-only">搜索博主</span>
             <input
@@ -279,21 +277,21 @@ export function Directory({ seed }: { seed: Creator[] }) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={EXAMPLES[placeholderIndex % EXAMPLES.length]}
-              className="w-full rounded-[999px] border border-white/60 bg-white/40 px-6 py-3.5 pr-14 text-center text-[15px] font-medium outline-none backdrop-blur-xl placeholder:text-black/30 focus:bg-white/55 focus:ring-2 focus:ring-white/60"
+              className="w-full rounded-full border border-[#ebebed] bg-[#fafafa] px-5 py-3.5 pr-12 text-center text-[15px] font-medium outline-none placeholder:text-[#8a8a8e] focus:border-[#cfcfd2] focus:bg-white"
             />
             {query ? (
               <button
                 type="button"
                 aria-label="清除搜索"
                 onClick={() => setQuery("")}
-                className="glass-chip absolute top-1/2 right-3 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-black/45"
+                className="absolute top-1/2 right-3 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-[#8a8a8e] hover:bg-[#f0f0f2]"
               >
                 ×
               </button>
             ) : null}
           </label>
 
-          <div className="tag-scroll mt-3 flex justify-center gap-2 overflow-x-auto pb-1">
+          <div className="tag-scroll mt-3 flex justify-center gap-2 overflow-x-auto pb-0.5">
             <button
               type="button"
               data-testid="tag-all"
@@ -331,7 +329,7 @@ export function Directory({ seed }: { seed: Creator[] }) {
               );
             })}
           </div>
-          <p data-testid="result-count" className="mt-2.5 text-center text-xs font-medium text-black/45">
+          <p data-testid="result-count" className="mt-2.5 text-center text-xs font-medium text-[#8a8a8e]">
             {statusText}
             {filtering ? " · 点头像看简介" : " · 输入或点标签，对上的人会浮上来"}
           </p>
@@ -345,7 +343,6 @@ export function Directory({ seed }: { seed: Creator[] }) {
                 const lifted = filtering && liftedIds.includes(creator.id);
                 const pose = (lifted ? floated.get(creator.id) : pile.get(creator.id)) ?? pile.get(creator.id);
                 if (!pose) return null;
-                const offset = (discSize - tokenSize) / 2;
                 return (
                   <button
                     key={creator.id}
@@ -356,48 +353,40 @@ export function Directory({ seed }: { seed: Creator[] }) {
                     aria-label={`${creator.name} @${creator.handle}`}
                     onClick={() => setActiveId(creator.id)}
                     className={cx(
-                      "avatar-disc absolute top-0 left-0 grid place-items-center rounded-full p-[3px]",
-                      lifted && "avatar-disc-lifted",
+                      "absolute top-0 left-0 overflow-hidden rounded-full border-[3px] border-white shadow-[0_8px_18px_rgba(17,17,17,0.12)]",
                       filtering && !lifted && "opacity-35 saturate-50",
                     )}
                     style={{
-                      width: discSize,
-                      height: discSize,
-                      transform: `translate3d(${pose.x - offset}px, ${pose.y - offset}px, 0) rotate(${pose.rotate}deg) scale(${pose.scale})`,
+                      width: tokenSize,
+                      height: tokenSize,
+                      transform: `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg) scale(${pose.scale})`,
                       zIndex: pose.z,
                       transition: reducedMotion
                         ? "none"
-                        : "transform 720ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease, box-shadow 320ms ease",
+                        : "transform 720ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease",
                     }}
                   >
-                    <span
-                      className="overflow-hidden rounded-full"
-                      style={{ width: tokenSize, height: tokenSize }}
-                    >
-                      <AvatarToken name={creator.name} handle={creator.handle} />
-                    </span>
+                    <AvatarToken name={creator.name} handle={creator.handle} />
                   </button>
                 );
               })
             : null}
         </div>
       ) : (
-        <ul className="relative z-20 mx-auto grid max-w-3xl gap-2.5 px-4 pt-4 pb-8">
+        <ul className="relative z-20 mx-auto grid max-w-3xl gap-2 px-4 pt-4 pb-8">
           {(filtering ? creators.filter((creator) => liftedIds.includes(creator.id)) : creators).map((creator) => (
             <li key={creator.id}>
               <button
                 type="button"
                 onClick={() => setActiveId(creator.id)}
-                className="glass flex w-full items-center gap-3 rounded-[28px] px-3.5 py-3 text-left"
+                className="card flex w-full items-center gap-3 px-3.5 py-3 text-left"
               >
-                <span className="avatar-disc h-12 w-12 overflow-hidden rounded-full p-[2px]">
-                  <span className="block h-full w-full overflow-hidden rounded-full">
-                    <AvatarToken name={creator.name} handle={creator.handle} />
-                  </span>
+                <span className="h-11 w-11 overflow-hidden rounded-full border-2 border-white shadow-sm">
+                  <AvatarToken name={creator.name} handle={creator.handle} />
                 </span>
                 <span className="min-w-0">
                   <span className="block truncate font-semibold tracking-tight">{creator.name}</span>
-                  <span className="block truncate text-sm text-black/45">
+                  <span className="block truncate text-sm text-[#8a8a8e]">
                     @{creator.handle} · {creator.sample ? "示例" : "真实账号"}
                   </span>
                 </span>
@@ -405,34 +394,10 @@ export function Directory({ seed }: { seed: Creator[] }) {
             </li>
           ))}
           {filtering && liftedIds.length === 0 ? (
-            <li className="py-16 text-center text-sm text-black/45">没有对上的博主</li>
+            <li className="py-16 text-center text-sm text-[#8a8a8e]">没有对上的博主</li>
           ) : null}
         </ul>
       )}
-
-      <nav className="pointer-events-none fixed inset-x-0 bottom-5 z-40 flex justify-center px-4">
-        <div className="pointer-events-auto glass flex items-center gap-2 rounded-[999px] p-2 pl-3">
-          <div className="hidden px-2 sm:block">
-            <p className="text-[10px] font-semibold tracking-[0.16em] text-black/35">ATLAS</p>
-            <p className="text-xs font-medium text-black/55">堆里找提示</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setView((current) => (current === "pile" ? "list" : "pile"))}
-            className="glass-chip rounded-full px-4 py-2.5 text-sm font-medium text-[#1c1c1e]/80"
-          >
-            {view === "pile" ? "列表视图" : "回到堆里"}
-          </button>
-          <button
-            type="button"
-            data-testid="open-classify"
-            onClick={() => setDialogOpen(true)}
-            className="rounded-full bg-[rgba(28,28,30,0.88)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_10px_28px_rgba(20,20,30,0.22)]"
-          >
-            收录
-          </button>
-        </div>
-      </nav>
 
       {active ? (
         <CreatorDetail
