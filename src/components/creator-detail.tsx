@@ -38,13 +38,13 @@ export function CreatorDetail({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-end sm:p-4 sm:pl-0">
+    <div className="fixed inset-0 z-50 flex items-end justify-end sm:items-stretch sm:p-3 sm:pl-0">
       <button type="button" aria-label="关闭" className="absolute inset-0 bg-black/20" onClick={onClose} />
       <article
         role="dialog"
         aria-modal="true"
         aria-labelledby="creator-detail-title"
-        className="relative z-10 flex max-h-[78dvh] w-full flex-col overflow-hidden rounded-t-[28px] border border-[#ebebed] bg-white shadow-[0_16px_48px_rgba(17,17,17,0.14)] sm:max-h-[calc(100dvh-2rem)] sm:w-[400px] sm:rounded-[28px]"
+        className="relative z-10 flex max-h-[78dvh] w-full flex-col overflow-hidden rounded-t-[28px] border border-[#ebebed] bg-white shadow-[0_16px_48px_rgba(17,17,17,0.14)] sm:h-auto sm:max-h-none sm:w-[400px] sm:self-stretch sm:rounded-[24px]"
       >
         <div className="flex items-start gap-3 border-b border-[#ebebed] px-4 py-4">
           <div className="h-14 w-14 overflow-hidden rounded-full border-2 border-[#f0f0f2] shadow-sm">

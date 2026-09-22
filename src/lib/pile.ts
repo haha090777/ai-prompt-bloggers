@@ -29,10 +29,10 @@ export function layoutPile(
   const size = mobile ? 56 : 72;
   const poses = new Map<string, TokenPose>();
   const center = width / 2;
-  // Keep the cloud above the bottom edge so faces stay readable.
-  const floor = height - size * (mobile ? 0.55 : 0.7);
-  const spread = Math.min(width * (mobile ? 0.9 : 0.72), mobile ? 360 : 720);
-  const heap = height * (mobile ? 0.38 : 0.42);
+  // Rise into the mid stage so the search column and pile share one vertical rhythm.
+  const floor = height - size * (mobile ? 0.45 : 0.5);
+  const spread = Math.min(width * (mobile ? 0.9 : 0.74), mobile ? 360 : 740);
+  const heap = height * (mobile ? 0.55 : 0.62);
 
   ids.forEach((id) => {
     const rand = mixer(id);
@@ -69,10 +69,10 @@ export function layoutFloat(
     count,
     mobile ? 3 : Math.min(6, Math.max(3, Math.ceil(Math.sqrt(count * 1.35)))),
   );
-  const gapX = Math.min(mobile ? 92 : 118, (width * 0.82) / Math.max(cols, 1));
-  const gapY = mobile ? 96 : 112;
+  const gapX = Math.min(mobile ? 96 : 124, (width * 0.86) / Math.max(cols, 1));
+  const gapY = mobile ? 100 : 118;
   // Sit just under the search column, fill the mid stage.
-  const bandTop = height * (mobile ? 0.08 : 0.06);
+  const bandTop = height * (mobile ? 0.04 : 0.02);
 
   ids.forEach((id, index) => {
     const rand = mixer(`${id}:up`);
