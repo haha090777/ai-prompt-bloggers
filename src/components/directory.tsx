@@ -30,6 +30,7 @@ function GlowField() {
       <span className="glow-orb glow-orb-c" />
       <span className="glow-orb glow-orb-d" />
       <span className="glow-orb glow-orb-e" />
+      <span className="glow-orb glow-orb-f" />
     </div>
   );
 }
@@ -266,76 +267,75 @@ export function Directory({ seed }: { seed: Creator[] }) {
 
       <div
         className={cx(
-          "relative z-30 mx-auto w-[min(36rem,calc(100%-2rem))]",
-          view === "pile" ? "absolute left-1/2 top-[13%] -translate-x-1/2" : "pt-24",
+          "relative z-30 mx-auto w-[min(38rem,calc(100%-1.5rem))]",
+          view === "pile" ? "absolute left-1/2 top-[11%] -translate-x-1/2" : "pt-24",
         )}
       >
-        <label className="relative block">
-          <span className="sr-only">搜索博主</span>
-          <input
-            data-testid="search"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={EXAMPLES[placeholderIndex % EXAMPLES.length]}
-            className="glass w-full rounded-[999px] px-6 py-4 pr-14 text-center text-[15px] font-medium outline-none placeholder:text-black/30 focus:ring-2 focus:ring-white/50"
-          />
-          {query ? (
+        <div className="glass rounded-[40px] px-3 py-3 sm:px-4 sm:py-4">
+          <label className="relative block">
+            <span className="sr-only">搜索博主</span>
+            <input
+              data-testid="search"
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={EXAMPLES[placeholderIndex % EXAMPLES.length]}
+              className="w-full rounded-[999px] border border-white/60 bg-white/40 px-6 py-3.5 pr-14 text-center text-[15px] font-medium outline-none backdrop-blur-xl placeholder:text-black/30 focus:bg-white/55 focus:ring-2 focus:ring-white/60"
+            />
+            {query ? (
+              <button
+                type="button"
+                aria-label="清除搜索"
+                onClick={() => setQuery("")}
+                className="glass-chip absolute top-1/2 right-3 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-black/45"
+              >
+                ×
+              </button>
+            ) : null}
+          </label>
+
+          <div className="tag-scroll mt-3 flex justify-center gap-2 overflow-x-auto pb-1">
             <button
               type="button"
-              aria-label="清除搜索"
-              onClick={() => setQuery("")}
-              className="glass-chip absolute top-1/2 right-3 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-black/45"
+              data-testid="tag-all"
+              aria-pressed={selected.length === 0 && !chineseOn}
+              onClick={() => {
+                setSelected([]);
+                if (chineseOn) setQuery("");
+              }}
+              className={chipClass(selected.length === 0 && !chineseOn)}
             >
-              ×
+              全部
             </button>
-          ) : null}
-        </label>
-
-        <div className="tag-scroll mt-3.5 flex justify-center gap-2 overflow-x-auto pb-1">
-          <button
-            type="button"
-            data-testid="tag-all"
-            aria-pressed={selected.length === 0 && !chineseOn}
-            onClick={() => {
-              setSelected([]);
-              if (chineseOn) setQuery("");
-            }}
-            className={chipClass(selected.length === 0 && !chineseOn)}
-          >
-            全部
-          </button>
-          <button
-            type="button"
-            data-testid="chip-zh"
-            aria-pressed={chineseOn}
-            onClick={() => setQuery((current) => (/中文|华语|国内/.test(current) ? "" : "中文博主"))}
-            className={chipClass(chineseOn)}
-          >
-            中文
-          </button>
-          {TAGS.map((tag) => {
-            const on = selected.includes(tag.id);
-            return (
-              <button
-                key={tag.id}
-                type="button"
-                data-testid={`tag-${tag.id}`}
-                aria-pressed={on}
-                onClick={() => toggleTag(tag.id)}
-                className={chipClass(on)}
-              >
-                {tag.label}
-              </button>
-            );
-          })}
+            <button
+              type="button"
+              data-testid="chip-zh"
+              aria-pressed={chineseOn}
+              onClick={() => setQuery((current) => (/中文|华语|国内/.test(current) ? "" : "中文博主"))}
+              className={chipClass(chineseOn)}
+            >
+              中文
+            </button>
+            {TAGS.map((tag) => {
+              const on = selected.includes(tag.id);
+              return (
+                <button
+                  key={tag.id}
+                  type="button"
+                  data-testid={`tag-${tag.id}`}
+                  aria-pressed={on}
+                  onClick={() => toggleTag(tag.id)}
+                  className={chipClass(on)}
+                >
+                  {tag.label}
+                </button>
+              );
+            })}
+          </div>
+          <p data-testid="result-count" className="mt-2.5 text-center text-xs font-medium text-black/45">
+            {statusText}
+            {filtering ? " · 点头像看简介" : " · 输入或点标签，对上的人会浮上来"}
+          </p>
         </div>
-        <p
-          data-testid="result-count"
-          className="mt-3 text-center text-xs font-medium text-black/40"
-        >
-          {statusText}
-          {filtering ? " · 点头像看简介" : " · 输入或点标签，对上的人会浮上来"}
-        </p>
       </div>
 
       {view === "pile" ? (
