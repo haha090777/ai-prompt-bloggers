@@ -48,7 +48,7 @@ npm start
 - @dotey、@op7418：原本就在名单里
 - @lijigang、@vista8、@oran_ge、@xiaohu、@jesselaunz、@Khazix0918、@berryxia：提示词哲学、工具实践、Agent / 快讯
 - @ZHO_ZHO_ZHO、@ring_hyacinth、@simonxxoo、@foxshuo、@dingyi：ComfyUI / AI 影像 / 画面提示 / 设计
-- @lxfater、@HiTw93：独立开发与 Claude Code / Agent 技能
+- @lxfater、@HiTw93、@penny777：独立开发、Claude Code / Agent 技能，以及镜头语言与长视频流程
 
 未编入：@Gorden_Sun（偏纯资讯日报）、@haibun（海辛实际账号是 @ring_hyacinth）、@iamluokai（未能可靠确认 X 主页）、@imxiaohu（官方互证指向 @xiaohu）。
 

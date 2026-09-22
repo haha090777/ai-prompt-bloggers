@@ -305,6 +305,17 @@ export const seedCreators: Creator[] = [
     hot: true,
   },
   {
+    id: "x-penny777",
+    name: "Penny777",
+    handle: "penny777",
+    bio: "中文 AI 创作者。分享镜头语言 Skill、AI 自动剪辑与长视频流程，以及版面排版和 Vibe Coding 相关提示与技能包。",
+    tags: ["video", "long_video", "code", "ui"],
+    sample: false,
+    source: "seed",
+    locale: "zh",
+    hot: true,
+  },
+  {
     id: "seed-linzhijian",
     name: "林纸间",
     handle: "linzhijian",
