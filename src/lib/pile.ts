@@ -19,33 +19,41 @@ function mixer(seed: string) {
   };
 }
 
-export function layoutPile(ids: readonly string[], width: number, height: number, mobile: boolean): Map<string, TokenPose> {
-  const size = mobile ? 52 : 68;
+/** Resting constellation: mid-lower stage, readable rings, mild overlap. */
+export function layoutPile(
+  ids: readonly string[],
+  width: number,
+  height: number,
+  mobile: boolean,
+): Map<string, TokenPose> {
+  const size = mobile ? 56 : 72;
   const poses = new Map<string, TokenPose>();
   const center = width / 2;
-  const floor = height - size * 0.42;
-  const spread = Math.min(width * (mobile ? 0.86 : 0.62), mobile ? 360 : 640);
-  const heap = height * (mobile ? 0.32 : 0.36);
+  // Keep the cloud above the bottom edge so faces stay readable.
+  const floor = height - size * (mobile ? 0.55 : 0.7);
+  const spread = Math.min(width * (mobile ? 0.9 : 0.72), mobile ? 360 : 720);
+  const heap = height * (mobile ? 0.38 : 0.42);
 
   ids.forEach((id) => {
     const rand = mixer(id);
     const along = rand();
-    const depth = Math.pow(rand(), 0.72);
-    const rawX = center + (along - 0.5) * spread * (0.45 + depth * 0.7) - size / 2;
-    const x = Math.min(width - size * 0.55, Math.max(-size * 0.2, rawX));
-    const y = floor - (1 - depth) * heap + (rand() - 0.5) * 14 - size / 2;
+    const depth = Math.pow(rand(), 0.85);
+    const rawX = center + (along - 0.5) * spread * (0.55 + depth * 0.55) - size / 2;
+    const x = Math.min(width - size * 0.7, Math.max(size * 0.05, rawX));
+    const y = floor - (1 - depth) * heap + (rand() - 0.5) * 18 - size / 2;
     poses.set(id, {
       x,
       y,
-      rotate: (rand() - 0.5) * (mobile ? 10 : 16),
-      scale: 0.92 + rand() * 0.12,
-      z: Math.round(depth * 24) + 1,
+      rotate: (rand() - 0.5) * (mobile ? 6 : 10),
+      scale: 0.94 + rand() * 0.1,
+      z: Math.round(depth * 20) + 1,
     });
   });
 
   return poses;
 }
 
+/** Floated matches: looser even cloud under the search, less overlap. */
 export function layoutFloat(
   ids: readonly string[],
   width: number,
@@ -56,11 +64,15 @@ export function layoutFloat(
   const count = ids.length;
   if (count === 0) return poses;
 
-  const size = mobile ? 52 : 68;
-  const cols = Math.min(count, mobile ? 4 : Math.min(7, Math.max(3, Math.ceil(Math.sqrt(count * 1.6)))));
-  const gapX = Math.min(mobile ? 76 : 96, (width * 0.78) / cols);
-  const gapY = mobile ? 74 : 92;
-  const bandTop = height * (mobile ? 0.46 : 0.43);
+  const size = mobile ? 56 : 72;
+  const cols = Math.min(
+    count,
+    mobile ? 3 : Math.min(6, Math.max(3, Math.ceil(Math.sqrt(count * 1.35)))),
+  );
+  const gapX = Math.min(mobile ? 92 : 118, (width * 0.82) / Math.max(cols, 1));
+  const gapY = mobile ? 96 : 112;
+  // Sit just under the search column, fill the mid stage.
+  const bandTop = height * (mobile ? 0.08 : 0.06);
 
   ids.forEach((id, index) => {
     const rand = mixer(`${id}:up`);
@@ -69,13 +81,33 @@ export function layoutFloat(
     const rowCount = Math.min(cols, count - row * cols);
     const start = width / 2 - ((rowCount - 1) * gapX) / 2;
     poses.set(id, {
-      x: start + col * gapX + (rand() - 0.5) * 14 - size / 2,
-      y: bandTop + row * gapY + (rand() - 0.5) * 10 - size / 2,
-      rotate: (rand() - 0.5) * 8,
-      scale: 1.05,
+      x: start + col * gapX + (rand() - 0.5) * 10 - size / 2,
+      y: bandTop + row * gapY + (rand() - 0.5) * 8 - size / 2,
+      rotate: (rand() - 0.5) * 4,
+      scale: mobile ? 1.06 : 1.12,
       z: 40 + index,
     });
   });
 
   return poses;
+}
+
+/** Non-matches sink lower and shrink when filtering. */
+export function layoutDimmedPile(
+  ids: readonly string[],
+  width: number,
+  height: number,
+  mobile: boolean,
+): Map<string, TokenPose> {
+  const base = layoutPile(ids, width, height, mobile);
+  const size = mobile ? 56 : 72;
+  for (const [id, pose] of base) {
+    base.set(id, {
+      ...pose,
+      y: Math.min(height - size * 0.35, pose.y + height * 0.08),
+      scale: pose.scale * 0.78,
+      z: Math.max(1, pose.z - 8),
+    });
+  }
+  return base;
 }

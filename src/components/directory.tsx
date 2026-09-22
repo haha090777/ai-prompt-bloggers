@@ -6,7 +6,7 @@ import { ClassifyDialog } from "@/components/classify-dialog";
 import { CreatorDetail } from "@/components/creator-detail";
 import { cx } from "@/lib/cx";
 import { matchCreatorsLocally } from "@/lib/match";
-import { layoutFloat, layoutPile } from "@/lib/pile";
+import { layoutDimmedPile, layoutFloat, layoutPile } from "@/lib/pile";
 import { loadLibrary, saveLibrary } from "@/lib/storage";
 import { isTagId, sortTags, TAGS, type TagId } from "@/lib/tags";
 import type { Creator, DirectoryCreator } from "@/lib/types";
@@ -152,10 +152,22 @@ export function Directory({ seed }: { seed: Creator[] }) {
     () => creators.filter((creator) => matchedIds.includes(creator.id)).map((creator) => creator.id),
     [creators, matchedIds],
   );
+  const restIds = useMemo(
+    () => creators.filter((creator) => !liftedIds.includes(creator.id)).map((creator) => creator.id),
+    [creators, liftedIds],
+  );
 
   const pile = useMemo(
-    () => layoutPile(creators.map((creator) => creator.id), size.width, size.height, mobile),
-    [creators, mobile, size.height, size.width],
+    () =>
+      filtering
+        ? layoutDimmedPile(restIds, size.width, size.height, mobile)
+        : layoutPile(
+            creators.map((creator) => creator.id),
+            size.width,
+            size.height,
+            mobile,
+          ),
+    [creators, filtering, mobile, restIds, size.height, size.width],
   );
   const floated = useMemo(
     () => (filtering ? layoutFloat(liftedIds, size.width, size.height, mobile) : new Map()),
@@ -163,7 +175,7 @@ export function Directory({ seed }: { seed: Creator[] }) {
   );
 
   const active = creators.find((creator) => creator.id === activeId) ?? null;
-  const tokenSize = mobile ? 52 : 68;
+  const tokenSize = mobile ? 56 : 72;
 
   function toggleTag(tag: TagId) {
     setSelected((current) =>
@@ -222,9 +234,9 @@ export function Directory({ seed }: { seed: Creator[] }) {
   }
 
   const statusText = !filtering
-    ? `${creators.length} 位博主堆在下面`
+    ? `${creators.length} 位博主在星图里`
     : liftedIds.length === 0
-      ? "没有对上的博主，都还在堆里"
+      ? "没有对上的博主"
       : phase === "jev"
         ? `Jev 挑出 ${liftedIds.length} 位`
         : `浮上 ${liftedIds.length} 位`;
@@ -235,22 +247,22 @@ export function Directory({ seed }: { seed: Creator[] }) {
   return (
     <div
       className={cx(
-        "relative bg-[#f4f4f5] text-[#111111]",
-        view === "pile" ? "h-dvh overflow-hidden" : "min-h-dvh pb-24",
+        "relative flex flex-col bg-[#f4f4f5] text-[#111111]",
+        view === "pile" ? "h-dvh overflow-hidden" : "min-h-dvh",
       )}
     >
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-start justify-between px-4 py-4 sm:px-6">
-        <div className="pointer-events-auto">
-          <p className="text-[10px] font-semibold tracking-[0.18em] text-[#8a8a8e]">PROMPT ATLAS</p>
-          <p className="text-[15px] font-semibold tracking-tight">提示词星图</p>
+      <header className="relative z-30 flex shrink-0 items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold tracking-tight sm:text-xl">AI 博主星图</h1>
+          <p className="text-[11px] font-medium tracking-[0.14em] text-[#8a8a8e]">AI BLOGGER ATLAS</p>
         </div>
-        <div className="pointer-events-auto flex gap-2">
+        <div className="flex shrink-0 gap-2">
           <button
             type="button"
             onClick={() => setView((current) => (current === "pile" ? "list" : "pile"))}
             className="pill-ghost px-3.5 py-1.5 text-sm font-medium"
           >
-            {view === "pile" ? "列表视图" : "回到堆里"}
+            {view === "pile" ? "列表视图" : "回到星图"}
           </button>
           <button
             type="button"
@@ -263,13 +275,8 @@ export function Directory({ seed }: { seed: Creator[] }) {
         </div>
       </header>
 
-      <div
-        className={cx(
-          "relative z-30 mx-auto w-[min(36rem,calc(100%-2rem))]",
-          view === "pile" ? "absolute left-1/2 top-[12%] -translate-x-1/2" : "pt-24",
-        )}
-      >
-        <div className="card p-3 sm:p-4">
+      <div className="relative z-30 mx-auto w-full max-w-[44rem] shrink-0 px-4 pb-3">
+        <div className="card px-3 py-3 sm:px-4 sm:py-4">
           <label className="relative block">
             <span className="sr-only">搜索博主</span>
             <input
@@ -277,7 +284,7 @@ export function Directory({ seed }: { seed: Creator[] }) {
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder={EXAMPLES[placeholderIndex % EXAMPLES.length]}
-              className="w-full rounded-full border border-[#ebebed] bg-[#fafafa] px-5 py-3.5 pr-12 text-center text-[15px] font-medium outline-none placeholder:text-[#8a8a8e] focus:border-[#cfcfd2] focus:bg-white"
+              className="w-full rounded-full border border-[#ebebed] bg-[#fafafa] px-5 py-3 pr-12 text-center text-[15px] font-medium outline-none placeholder:text-[#8a8a8e] focus:border-[#cfcfd2] focus:bg-white"
             />
             {query ? (
               <button
@@ -337,11 +344,11 @@ export function Directory({ seed }: { seed: Creator[] }) {
       </div>
 
       {view === "pile" ? (
-        <div ref={stageRef} className="absolute inset-0 z-10" data-testid="pile-stage">
+        <div ref={stageRef} className="relative z-10 min-h-0 w-full flex-1" data-testid="pile-stage">
           {size.width > 0
             ? creators.map((creator) => {
                 const lifted = filtering && liftedIds.includes(creator.id);
-                const pose = (lifted ? floated.get(creator.id) : pile.get(creator.id)) ?? pile.get(creator.id);
+                const pose = lifted ? floated.get(creator.id) : pile.get(creator.id);
                 if (!pose) return null;
                 return (
                   <button
@@ -353,8 +360,8 @@ export function Directory({ seed }: { seed: Creator[] }) {
                     aria-label={`${creator.name} @${creator.handle}`}
                     onClick={() => setActiveId(creator.id)}
                     className={cx(
-                      "absolute top-0 left-0 overflow-hidden rounded-full border-[3px] border-white shadow-[0_8px_18px_rgba(17,17,17,0.12)]",
-                      filtering && !lifted && "opacity-35 saturate-50",
+                      "absolute top-0 left-0 overflow-hidden rounded-full border-[3px] border-white bg-white shadow-[0_6px_16px_rgba(17,17,17,0.12)]",
+                      filtering && !lifted && "opacity-30 saturate-40",
                     )}
                     style={{
                       width: tokenSize,
@@ -373,7 +380,7 @@ export function Directory({ seed }: { seed: Creator[] }) {
             : null}
         </div>
       ) : (
-        <ul className="relative z-20 mx-auto grid max-w-3xl gap-2 px-4 pt-4 pb-8">
+        <ul className="relative z-20 mx-auto grid w-full max-w-3xl flex-1 gap-2 px-4 pb-10">
           {(filtering ? creators.filter((creator) => liftedIds.includes(creator.id)) : creators).map((creator) => (
             <li key={creator.id}>
               <button

@@ -18,9 +18,8 @@ const noto = Noto_Sans_SC({
 });
 
 export const metadata: Metadata = {
-  title: "AI 提示词博主合集 · 提示词星图",
-  description:
-    "在一堆 X 头像里搜索 AI 提示词博主。输入自然语言或点标签，对上的人会从堆里浮上来。",
+  title: "AI 博主星图",
+  description: "在星图里搜索分享 AI 提示词的 X 博主。输入自然语言或点标签，对上的人会浮上来。",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

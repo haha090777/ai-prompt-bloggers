@@ -38,47 +38,45 @@ export function CreatorDetail({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center">
-      <button type="button" aria-label="关闭" className="absolute inset-0 bg-black/25" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex items-end justify-end sm:p-4 sm:pl-0">
+      <button type="button" aria-label="关闭" className="absolute inset-0 bg-black/20" onClick={onClose} />
       <article
         role="dialog"
         aria-modal="true"
         aria-labelledby="creator-detail-title"
-        className="relative z-10 w-full max-w-md overflow-hidden rounded-[28px] border border-[#ebebed] bg-white shadow-[0_16px_48px_rgba(17,17,17,0.12)]"
+        className="relative z-10 flex max-h-[78dvh] w-full flex-col overflow-hidden rounded-t-[28px] border border-[#ebebed] bg-white shadow-[0_16px_48px_rgba(17,17,17,0.14)] sm:max-h-[calc(100dvh-2rem)] sm:w-[400px] sm:rounded-[28px]"
       >
-        <div className="card-dark rounded-none border-0 px-5 pt-5 pb-4">
-          <div className="flex items-start gap-3">
-            <div className="h-16 w-16 overflow-hidden rounded-full border-[3px] border-white/90 shadow-md">
-              <AvatarToken name={creator.name} handle={creator.handle} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 id="creator-detail-title" className="truncate text-xl font-semibold tracking-tight text-white">
-                  {creator.name}
-                </h2>
-                <span
-                  className={cx(
-                    "rounded-full px-2.5 py-0.5 text-[11px] font-medium",
-                    creator.sample ? "bg-white/10 text-white/65" : "bg-white/15 text-white",
-                  )}
-                >
-                  {creator.sample ? "示例" : "真实账号"}
-                </span>
-                {creator.locale === "zh" ? (
-                  <span className="rounded-full bg-white/15 px-2.5 py-0.5 text-[11px] font-medium text-white">
-                    中文
-                  </span>
-                ) : null}
-              </div>
-              <p className="mt-0.5 text-sm text-white/55">@{creator.handle}</p>
-            </div>
-            <button type="button" onClick={onClose} className="text-sm text-white/55 hover:text-white">
-              关闭
-            </button>
+        <div className="flex items-start gap-3 border-b border-[#ebebed] px-4 py-4">
+          <div className="h-14 w-14 overflow-hidden rounded-full border-2 border-[#f0f0f2] shadow-sm">
+            <AvatarToken name={creator.name} handle={creator.handle} />
           </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <h2 id="creator-detail-title" className="truncate text-lg font-semibold tracking-tight text-[#111]">
+                {creator.name}
+              </h2>
+              <span
+                className={cx(
+                  "rounded-full px-2 py-0.5 text-[11px] font-medium",
+                  creator.sample ? "bg-[#f4f4f5] text-[#8a8a8e]" : "bg-[#eef6e8] text-[#3d5c12]",
+                )}
+              >
+                {creator.sample ? "示例" : "真实账号"}
+              </span>
+              {creator.locale === "zh" ? (
+                <span className="rounded-full bg-[#f0f0f2] px-2 py-0.5 text-[11px] font-medium text-[#555]">
+                  中文
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-0.5 text-sm text-[#8a8a8e]">@{creator.handle}</p>
+          </div>
+          <button type="button" onClick={onClose} className="text-sm text-[#8a8a8e] hover:text-[#111]">
+            关闭
+          </button>
         </div>
 
-        <div className="px-5 py-5">
+        <div className="overflow-y-auto px-4 py-4">
           <p className="text-sm leading-6 text-[#111]/80">{creator.bio}</p>
 
           {editing ? (
