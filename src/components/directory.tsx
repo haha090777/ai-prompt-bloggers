@@ -1,20 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { AvatarToken } from "@/components/avatar-token";
 import { ClassifyDialog } from "@/components/classify-dialog";
-import { CreatorCard } from "@/components/creator-card";
-import { TagBar } from "@/components/tag-bar";
+import { CreatorDetail } from "@/components/creator-detail";
 import { cx } from "@/lib/cx";
+import { matchCreatorsLocally } from "@/lib/match";
+import { layoutFloat, layoutPile } from "@/lib/pile";
 import { loadLibrary, saveLibrary } from "@/lib/storage";
-import { sortTags, TAGS, type TagId } from "@/lib/tags";
+import { isTagId, sortTags, TAGS, type TagId } from "@/lib/tags";
 import type { Creator, DirectoryCreator } from "@/lib/types";
 
-type ClassifyStatus = {
-  configured: boolean;
-  provider: "gateway" | "typesafe" | null;
-  model: string | null;
-  threshold: number;
-};
+const EXAMPLES = ["有爆款", "英文博主", "今天最热", "海报提示词", "UI 设计", "代码提示词"];
+
+type SearchPhase = "idle" | "local" | "jev";
 
 function sameTags(left: readonly TagId[], right: readonly TagId[]) {
   if (left.length !== right.length) return false;
@@ -23,27 +22,38 @@ function sameTags(left: readonly TagId[], right: readonly TagId[]) {
   return a.every((tag, index) => tag === b[index]);
 }
 
-function matchesQuery(creator: Creator, query: string) {
-  const needle = query.trim().toLowerCase().replace(/^@/, "");
-  if (!needle) return true;
-  return `${creator.name}\n${creator.handle}\n${creator.bio}`.toLowerCase().includes(needle);
-}
-
 export function Directory({ seed }: { seed: Creator[] }) {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const requestRef = useRef(0);
   const [added, setAdded] = useState<Creator[]>([]);
   const [overrides, setOverrides] = useState<Record<string, TagId[]>>({});
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState<TagId[]>([]);
   const [query, setQuery] = useState("");
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [view, setView] = useState<"pile" | "list">("pile");
+  const [size, setSize] = useState({ width: 0, height: 0 });
+  const [mobile, setMobile] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [matchedIds, setMatchedIds] = useState<string[]>([]);
+  const [phase, setPhase] = useState<SearchPhase>("idle");
+  const [activeId, setActiveId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [highlightId, setHighlightId] = useState<string | null>(null);
-  const [status, setStatus] = useState<ClassifyStatus | null>(null);
+  const [urlReady, setUrlReady] = useState(false);
 
   useEffect(() => {
     const stored = loadLibrary();
     setAdded(stored.added);
     setOverrides(stored.overrides);
+    const params = new URLSearchParams(window.location.search);
+    const initialQuery = params.get("q") ?? "";
+    const initialTags = (params.get("tags") ?? "")
+      .split(",")
+      .filter((tag): tag is TagId => isTagId(tag));
+    if (initialQuery) setQuery(initialQuery);
+    if (initialTags.length) setSelected(initialTags);
     setReady(true);
+    setUrlReady(true);
   }, []);
 
   useEffect(() => {
@@ -52,25 +62,33 @@ export function Directory({ seed }: { seed: Creator[] }) {
   }, [added, overrides, ready]);
 
   useEffect(() => {
-    let cancelled = false;
-    fetch("/api/classify")
-      .then((response) => response.json())
-      .then((data: ClassifyStatus) => {
-        if (!cancelled) setStatus(data);
-      })
-      .catch(() => {
-        if (!cancelled) setStatus(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    if (!urlReady) return;
+    const params = new URLSearchParams();
+    if (query.trim()) params.set("q", query.trim());
+    if (selected.length) params.set("tags", selected.join(","));
+    const next = params.size ? `/?${params.toString()}` : "/";
+    window.history.replaceState(null, "", next);
+  }, [query, selected, urlReady]);
 
   useEffect(() => {
-    if (!highlightId) return;
-    const timer = window.setTimeout(() => setHighlightId(null), 2400);
-    return () => window.clearTimeout(timer);
-  }, [highlightId]);
+    const node = stageRef.current;
+    if (!node) return;
+    const measure = () => {
+      setSize({ width: node.clientWidth, height: node.clientHeight });
+      setMobile(window.matchMedia("(max-width: 720px)").matches);
+      setReducedMotion(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [view]);
+
+  useEffect(() => {
+    if (query.trim()) return;
+    const timer = window.setInterval(() => setPlaceholderIndex((index) => index + 1), 2600);
+    return () => window.clearInterval(timer);
+  }, [query]);
 
   const creators = useMemo<DirectoryCreator[]>(() => {
     const locals = added.map((creator) => ({ ...creator, overridden: false }));
@@ -81,23 +99,69 @@ export function Directory({ seed }: { seed: Creator[] }) {
     return [...locals, ...seeded];
   }, [added, overrides, seed]);
 
-  const searched = useMemo(
-    () => creators.filter((creator) => matchesQuery(creator, query)),
-    [creators, query],
+  const filtering = query.trim().length > 0 || selected.length > 0;
+
+  useEffect(() => {
+    const localIds = filtering ? matchCreatorsLocally(creators, query, selected) : [];
+    setMatchedIds(localIds);
+    if (!query.trim()) {
+      setPhase(selected.length ? "local" : "idle");
+      return;
+    }
+
+    const requestId = requestRef.current + 1;
+    requestRef.current = requestId;
+    const timer = window.setTimeout(() => {
+      setPhase("local");
+      fetch("/api/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          query: query.trim(),
+          selectedTags: selected,
+          creators: creators.map((creator) => ({
+            id: creator.id,
+            name: creator.name,
+            handle: creator.handle,
+            bio: creator.bio,
+            tags: creator.tags,
+            locale: creator.locale,
+            hot: creator.hot,
+            sample: creator.sample,
+          })),
+        }),
+      })
+        .then((response) => response.json())
+        .then((data: { ok?: boolean; fallback?: boolean; matchedIds?: string[] }) => {
+          if (requestRef.current !== requestId) return;
+          if (data.ok && data.fallback === false && Array.isArray(data.matchedIds)) {
+            setMatchedIds(data.matchedIds);
+            setPhase("jev");
+          }
+        })
+        .catch(() => {
+          if (requestRef.current === requestId) setPhase("local");
+        });
+    }, 280);
+
+    return () => window.clearTimeout(timer);
+  }, [creators, filtering, query, selected]);
+
+  const liftedIds = useMemo(
+    () => creators.filter((creator) => matchedIds.includes(creator.id)).map((creator) => creator.id),
+    [creators, matchedIds],
   );
 
-  const counts = useMemo(() => {
-    const next = Object.fromEntries(TAGS.map((tag) => [tag.id, 0])) as Record<TagId, number>;
-    for (const creator of searched) {
-      for (const tag of creator.tags) next[tag] += 1;
-    }
-    return next;
-  }, [searched]);
+  const pile = useMemo(
+    () => layoutPile(creators.map((creator) => creator.id), size.width, size.height, mobile),
+    [creators, mobile, size.height, size.width],
+  );
+  const floated = useMemo(
+    () => (filtering ? layoutFloat(liftedIds, size.width, size.height, mobile) : new Map()),
+    [filtering, liftedIds, mobile, size.height, size.width],
+  );
 
-  const filtered = useMemo(() => {
-    if (selected.length === 0) return searched;
-    return searched.filter((creator) => creator.tags.some((tag) => selected.includes(tag)));
-  }, [searched, selected]);
+  const active = creators.find((creator) => creator.id === activeId) ?? null;
 
   function toggleTag(tag: TagId) {
     setSelected((current) =>
@@ -132,6 +196,7 @@ export function Directory({ seed }: { seed: Creator[] }) {
 
   function removeCreator(id: string) {
     setAdded((current) => current.filter((creator) => creator.id !== id));
+    setActiveId(null);
   }
 
   function addCreator(input: { name: string; handle: string; bio: string; tags: TagId[] }) {
@@ -143,153 +208,186 @@ export function Directory({ seed }: { seed: Creator[] }) {
       tags: sortTags(input.tags),
       sample: false,
       source: "local",
+      locale: /[\u4e00-\u9fff]/.test(`${input.name}${input.bio}`) ? "zh" : "en",
+      hot: false,
     };
     setAdded((current) => [creator, ...current.filter((item) => item.id !== creator.id)]);
-    setSelected([]);
     setQuery("");
-    setHighlightId(creator.id);
+    setSelected([]);
+    setView("pile");
+    setActiveId(creator.id);
     setDialogOpen(false);
   }
 
-  const filteredOut = filtered.length === 0;
-  const statusLabel = !status
-    ? "正在检查分类服务"
-    : status.provider === "gateway"
-      ? "Jev · AI Gateway"
-      : status.provider === "typesafe"
-        ? "Jev · TypeSafe"
-        : "未配置密钥 · 可手动打标";
+  const statusText = !filtering
+    ? `${creators.length} 位博主堆在下面`
+    : liftedIds.length === 0
+      ? "没有对上的博主，都还在堆里"
+      : phase === "jev"
+        ? `Jev 挑出 ${liftedIds.length} 位`
+        : `浮上 ${liftedIds.length} 位`;
 
   return (
-    <div className="relative mx-auto min-h-screen max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-      <header className="sticky top-0 z-30 -mx-4 border-b border-white/8 bg-[#07080c]/78 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="mr-auto flex items-center gap-3">
-            <svg width="32" height="32" viewBox="0 0 32 32" aria-hidden className="shrink-0">
-              <rect width="32" height="32" rx="9" fill="#d6ff4a" />
-              <path
-                fill="#14160c"
-                d="M16 6.2 18.3 13.7 25.8 16 18.3 18.3 16 25.8 13.7 18.3 6.2 16 13.7 13.7Z"
-              />
-            </svg>
-            <div>
-              <p className="font-display text-[11px] tracking-[0.22em] text-lime">PROMPT ATLAS</p>
-              <p className="text-sm font-semibold leading-5">提示词星图</p>
-            </div>
-          </div>
-          <p
-            data-testid="jev-status"
-            className={cx(
-              "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs",
-              status?.configured
-                ? "border-lime/30 bg-lime/10 text-lime"
-                : "border-white/12 bg-white/5 text-mist",
-            )}
+    <div className={cx("relative bg-[#f3f4f6] text-[#1c1c1e]", view === "pile" ? "h-dvh overflow-hidden" : "min-h-dvh")}>
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-30 flex items-center justify-between px-4 py-4 sm:px-6">
+        <div className="pointer-events-auto">
+          <p className="font-display text-[11px] tracking-[0.18em] text-black/35">PROMPT ATLAS</p>
+          <p className="text-sm font-semibold">提示词星图</p>
+        </div>
+        <div className="pointer-events-auto flex gap-2">
+          <button
+            type="button"
+            onClick={() => setView((current) => (current === "pile" ? "list" : "pile"))}
+            className="rounded-full bg-white px-3 py-1.5 text-sm shadow-sm"
           >
-            <span className={cx("h-1.5 w-1.5 rounded-full", status?.configured ? "bg-lime" : "bg-white/35")} />
-            {statusLabel}
-          </p>
+            {view === "pile" ? "列表视图" : "回到堆里"}
+          </button>
           <button
             type="button"
             data-testid="open-classify"
             onClick={() => setDialogOpen(true)}
-            className="rounded-full bg-lime px-3.5 py-1.5 text-sm font-semibold text-[#17190c]"
+            className="rounded-full bg-[#1c1c1e] px-3 py-1.5 text-sm text-white"
           >
-            收录新博主
+            收录
           </button>
-        </div>
-        <div className="mt-3">
-          <TagBar selected={selected} counts={counts} onToggle={toggleTag} onClear={() => setSelected([])} />
-          <p className="mt-2 text-xs text-mist">多选时显示包含任一标签的博主。点「全部」可清除筛选。</p>
         </div>
       </header>
 
-      <section className="pt-10 sm:pt-14">
-        <p className="font-display text-xs tracking-[0.28em] text-lime">AI PROMPT INDEX</p>
-        <h1 className="mt-3 max-w-4xl text-4xl font-black tracking-tight text-balance sm:text-6xl sm:leading-[1.05]">
-          AI 提示词博主合集
-        </h1>
-        <p className="mt-5 max-w-2xl text-base leading-7 text-paper/72 sm:text-lg">
-          在 X 上按作品找人。海报、短视频、界面、长片和代码都可以点选；一位作者带多个标签时，会出现在每一个相关分类里。
-        </p>
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label className="relative block w-full sm:max-w-md">
-            <span className="sr-only">搜索</span>
-            <input
-              data-testid="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="搜索名字、账号或简介"
-              className="w-full rounded-full border border-white/12 bg-white/5 px-4 py-2.5 text-sm outline-none placeholder:text-white/35 focus:border-lime/70"
-            />
-          </label>
-          <p data-testid="result-count" aria-live="polite" className="text-sm text-mist">
-            {filteredOut
-              ? "没有符合条件的博主"
-              : selected.length === 0 && !query.trim()
-                ? `全部 ${creators.length} 位`
-                : `显示 ${filtered.length} / ${creators.length} 位`}
-          </p>
-        </div>
-      </section>
+      <div
+        className={cx(
+          "z-30 mx-auto w-[min(34rem,calc(100%-2rem))]",
+          view === "pile" ? "absolute left-1/2 top-[15%] -translate-x-1/2" : "relative px-0 pt-24",
+        )}
+      >
+        <label className="relative block">
+          <span className="sr-only">搜索博主</span>
+          <input
+            data-testid="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={EXAMPLES[placeholderIndex % EXAMPLES.length]}
+            className="w-full rounded-2xl border border-black/8 bg-white px-5 py-3.5 pr-12 text-center text-base shadow-[0_10px_40px_rgba(20,20,20,0.06)] outline-none placeholder:text-black/28 focus:border-black/20"
+          />
+          {query ? (
+            <button
+              type="button"
+              aria-label="清除搜索"
+              onClick={() => setQuery("")}
+              className="absolute top-1/2 right-3 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-black/40 hover:bg-black/5"
+            >
+              ×
+            </button>
+          ) : null}
+        </label>
 
-      {filteredOut ? (
-        <div
-          data-testid="empty-state"
-          className="mt-10 rounded-[28px] border border-dashed border-white/15 bg-white/3 px-6 py-16 text-center"
-        >
-          <p className="font-display text-xs tracking-[0.22em] text-lime">EMPTY</p>
-          <h2 className="mt-3 text-2xl font-semibold">没有符合条件的博主</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-mist">
-            这组标签或搜索词没有命中目录。清除筛选后可以看回全部样本，也可以收录一位新博主。
-          </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-2">
-            <button
-              type="button"
-              data-testid="clear-filters"
-              onClick={() => {
-                setSelected([]);
-                setQuery("");
-              }}
-              className="rounded-full bg-lime px-4 py-2 text-sm font-semibold text-[#17190c]"
-            >
-              查看全部
-            </button>
-            <button
-              type="button"
-              onClick={() => setDialogOpen(true)}
-              className="rounded-full border border-white/15 px-4 py-2 text-sm"
-            >
-              收录新博主
-            </button>
-          </div>
+        <div className="tag-scroll mt-3 flex justify-center gap-1.5 overflow-x-auto pb-1">
+          <button
+            type="button"
+            data-testid="tag-all"
+            aria-pressed={selected.length === 0}
+            onClick={() => setSelected([])}
+            className={cx(
+              "shrink-0 rounded-full px-3 py-1 text-sm",
+              selected.length === 0 ? "bg-[#1c1c1e] text-white" : "bg-white text-black/70 shadow-sm",
+            )}
+          >
+            全部
+          </button>
+          {TAGS.map((tag) => {
+            const on = selected.includes(tag.id);
+            return (
+              <button
+                key={tag.id}
+                type="button"
+                data-testid={`tag-${tag.id}`}
+                aria-pressed={on}
+                onClick={() => toggleTag(tag.id)}
+                className={cx(
+                  "shrink-0 rounded-full px-3 py-1 text-sm",
+                  on ? "bg-[#1c1c1e] text-white" : "bg-white text-black/70 shadow-sm",
+                )}
+              >
+                {tag.label}
+              </button>
+            );
+          })}
+        </div>
+        <p data-testid="result-count" className="mt-2 text-center text-xs text-black/40">
+          {statusText}
+          {filtering ? " · 点头像看简介" : " · 输入或点标签，对上的人会浮上来"}
+        </p>
+      </div>
+
+      {view === "pile" ? (
+        <div ref={stageRef} className="absolute inset-0 z-10" data-testid="pile-stage">
+          {size.width > 0
+            ? creators.map((creator) => {
+                const lifted = filtering && liftedIds.includes(creator.id);
+                const pose = (lifted ? floated.get(creator.id) : pile.get(creator.id)) ?? pile.get(creator.id);
+                if (!pose) return null;
+                return (
+                  <button
+                    key={creator.id}
+                    type="button"
+                    data-testid="avatar-token"
+                    data-handle={creator.handle}
+                    data-lifted={lifted ? "true" : "false"}
+                    aria-label={`${creator.name} @${creator.handle}`}
+                    onClick={() => setActiveId(creator.id)}
+                    className={cx(
+                      "absolute top-0 left-0 overflow-hidden rounded-full border-2 border-white shadow-[0_10px_18px_rgba(0,0,0,0.16)]",
+                      filtering && !lifted && "opacity-40 saturate-50",
+                    )}
+                    style={{
+                      width: mobile ? 52 : 68,
+                      height: mobile ? 52 : 68,
+                      transform: `translate3d(${pose.x}px, ${pose.y}px, 0) rotate(${pose.rotate}deg) scale(${pose.scale})`,
+                      zIndex: pose.z,
+                      transition: reducedMotion ? "none" : "transform 720ms cubic-bezier(0.22, 1, 0.36, 1), opacity 320ms ease",
+                    }}
+                  >
+                    <AvatarToken name={creator.name} handle={creator.handle} />
+                  </button>
+                );
+              })
+            : null}
         </div>
       ) : (
-        <ul className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {filtered.map((creator, index) => (
+        <ul className="mx-auto grid max-w-3xl gap-2 px-4 pt-4 pb-16">
+          {(filtering ? creators.filter((creator) => liftedIds.includes(creator.id)) : creators).map((creator) => (
             <li key={creator.id}>
-              <CreatorCard
-                creator={creator}
-                index={index}
-                activeTags={selected}
-                highlighted={highlightId === creator.id}
-                onToggleFilter={toggleTag}
-                onSaveTags={saveTags}
-                onResetTags={resetTags}
-                onRemove={removeCreator}
-              />
+              <button
+                type="button"
+                onClick={() => setActiveId(creator.id)}
+                className="flex w-full items-center gap-3 rounded-2xl bg-white px-3 py-2.5 text-left shadow-sm"
+              >
+                <span className="h-11 w-11 overflow-hidden rounded-full">
+                  <AvatarToken name={creator.name} handle={creator.handle} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{creator.name}</span>
+                  <span className="block truncate text-sm text-black/45">
+                    @{creator.handle} · {creator.sample ? "示例" : "真实账号"}
+                  </span>
+                </span>
+              </button>
             </li>
           ))}
+          {filtering && liftedIds.length === 0 ? (
+            <li className="py-16 text-center text-sm text-black/45">没有对上的博主</li>
+          ) : null}
         </ul>
       )}
 
-      <footer className="mt-14 border-t border-white/8 pt-6 text-sm leading-6 text-mist">
-        <p>
-          目录里的账号是占位样本，不代表真实的 X 用户。链接按用户名打开 x.com。分类调用 TypeSafe Jev：简介作为
-          state，每个标签是一道是/否问题，概率达到 70% 才自动打标。没有密钥时，筛选、样本和手动标签都照常可用。
-        </p>
-      </footer>
-
+      {active ? (
+        <CreatorDetail
+          creator={active}
+          onClose={() => setActiveId(null)}
+          onSaveTags={saveTags}
+          onResetTags={resetTags}
+          onRemove={removeCreator}
+        />
+      ) : null}
       {dialogOpen ? (
         <ClassifyDialog
           existingHandles={creators.map((creator) => creator.handle)}

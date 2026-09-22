@@ -16,25 +16,9 @@ html {
 
 body {
   min-height: 100vh;
-  color: var(--color-paper);
+  color: #1c1c1e;
   font-family: var(--font-sans);
-  background:
-    radial-gradient(980px 520px at -8% -12%, rgba(214, 255, 74, 0.16), transparent 58%),
-    radial-gradient(860px 480px at 108% -18%, rgba(142, 182, 255, 0.2), transparent 52%),
-    radial-gradient(640px 420px at 70% 120%, rgba(201, 176, 255, 0.1), transparent 46%),
-    #07080c;
-}
-
-body::before {
-  content: "";
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-  background-size: 72px 72px;
-  mask-image: radial-gradient(circle at 50% 0%, black, transparent 78%);
+  background: #f3f4f6;
 }
 
 ::selection {

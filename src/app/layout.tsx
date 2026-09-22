@@ -20,7 +20,7 @@ const syne = Syne({
 export const metadata: Metadata = {
   title: "AI 提示词博主合集 · 提示词星图",
   description:
-    "浏览并筛选在 X 上分享 AI 提示词的创作者。按海报、视频、UI、长视频与代码分类，可用 TypeSafe Jev 自动建议标签。",
+    "在一堆 X 头像里搜索 AI 提示词博主。输入自然语言或点标签，对上的人会从堆里浮上来。",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

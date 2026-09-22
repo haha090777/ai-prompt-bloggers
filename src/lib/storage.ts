@@ -11,6 +11,10 @@ export type LibraryState = {
 
 const EMPTY: LibraryState = { added: [], overrides: {} };
 
+function inferLocale(name: string, bio: string): "en" | "zh" {
+  return /[\u4e00-\u9fff]/.test(`${name}${bio}`) ? "zh" : "en";
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
@@ -33,6 +37,8 @@ function parseCreator(value: unknown): Creator | null {
     tags: sortTags(parsedTags),
     sample: Boolean(sample),
     source: "local",
+    locale: value.locale === "zh" || value.locale === "en" ? value.locale : inferLocale(name, bio),
+    hot: value.hot === true,
   };
 }
 
