@@ -30,17 +30,20 @@ export function layoutPile(
   const poses = new Map<string, TokenPose>();
   const center = width / 2;
   // Rise into the mid stage so the search column and pile share one vertical rhythm.
-  const floor = height - size * (mobile ? 0.45 : 0.5);
-  const spread = Math.min(width * (mobile ? 0.9 : 0.74), mobile ? 360 : 740);
-  const heap = height * (mobile ? 0.55 : 0.62);
+  const floor = height - size * (mobile ? 0.4 : 0.32);
+  const spread = Math.min(width * (mobile ? 0.88 : 0.7), mobile ? 360 : 700);
+  const heap = height * (mobile ? 0.62 : 0.72);
 
   ids.forEach((id) => {
     const rand = mixer(id);
     const along = rand();
-    const depth = Math.pow(rand(), 0.85);
-    const rawX = center + (along - 0.5) * spread * (0.55 + depth * 0.55) - size / 2;
+    const depth = Math.pow(rand(), 0.75);
+    const rawX = center + (along - 0.5) * spread * (0.5 + depth * 0.55) - size / 2;
     const x = Math.min(width - size * 0.7, Math.max(size * 0.05, rawX));
-    const y = floor - (1 - depth) * heap + (rand() - 0.5) * 18 - size / 2;
+    const y = Math.max(
+      size * 0.15,
+      floor - (1 - depth) * heap + (rand() - 0.5) * 16 - size / 2,
+    );
     poses.set(id, {
       x,
       y,
