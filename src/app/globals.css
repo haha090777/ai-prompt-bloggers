@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-noto), "WenQuanYi Micro Hei", "Droid Sans Fallback", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --font-display: var(--font-syne), var(--font-noto), sans-serif;
+  --color-ink: #07080c;
+  --color-lime: #d6ff4a;
+  --color-paper: #f4f1ea;
+  --color-mist: #b7b2a8;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--color-paper);
+  font-family: var(--font-sans);
+  background:
+    radial-gradient(980px 520px at -8% -12%, rgba(214, 255, 74, 0.16), transparent 58%),
+    radial-gradient(860px 480px at 108% -18%, rgba(142, 182, 255, 0.2), transparent 52%),
+    radial-gradient(640px 420px at 70% 120%, rgba(201, 176, 255, 0.1), transparent 46%),
+    #07080c;
+}
+
+body::before {
+  content: "";
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at 50% 0%, black, transparent 78%);
+}
+
+::selection {
+  background: #d6ff4a;
+  color: #14160c;
+}
+
+.tag-scroll {
+  scrollbar-width: none;
+}
+
+.tag-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
