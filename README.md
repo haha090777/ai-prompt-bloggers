@@ -26,22 +26,33 @@ npm start
 
 默认是头像堆，不是卡片墙。右上角可以切到「列表视图」。
 
-- 搜索框接受自然语言。占位符会轮换「有爆款」「英文博主」「今天最热」「海报提示词」「UI 设计」。
-- 搜索框下面的标签是快捷筛选，可多选。多选时包含任一标签的人都会浮上。「全部」清掉标签。
+- 搜索框接受自然语言。占位符会轮换「有爆款」「英文博主」「中文博主」「今天最热」「海报提示词」「UI 设计」。
+- 搜索框下面的标签是快捷筛选，可多选。多选时包含任一标签的人都会浮上。「全部」清掉标签。「中文」会写入「中文博主」，只浮上 `locale: "zh"` 的账号。
 - 标签和搜索同时存在时，两边都要满足。
 - 没对上的人留在堆里，并变淡。
 - 配置了 Jev 之后，`POST /api/search` 会把 `{ query, selectedTags, creators }` 交给 Jev，每位博主一道是/否题，概率 ≥ 0.62 才浮上。失败或没有密钥时，仍用本地规则，动画照常发生。
 
 ## 数据从哪来
 
-真实账号来自公开的 X 简介和 SuperX 一类公开档案（2026-09 前后核对过主页或被其他公开页面点名）。只收了能确认 handle 的人，没有凭记忆编账号。包括以下公开账号：
+真实账号来自公开的 X 简介、公开档案镜像、GitHub / 个人站互证（2026-09 前后核对）。只收了能确认 handle 的人，没有凭记忆编账号。
+
+英文向（节选）：
 
 - @lloydcreates、@nickfloats、@revelinai、@ciguleva、@dvorahfr、@javilopen：海报 / 视频 / 长片提示
 - @RobotCleopatra：视频与长视频
-- @godofprompt、@mckaywrigley、@goodside、@dotey：提示词包、编程与代理工作流
-- @op7418、@skirano：界面、设计和相关提示
+- @godofprompt、@mckaywrigley、@goodside：提示词包、编程与试验
+- @skirano：界面与相关提示
 
-`hot` 和 `locale` 是给「今天最热」「英文博主」用的粗分类，不是实时热度。要改名单，编辑 [`src/data/creators.ts`](src/data/creators.ts)。
+中文向（`locale: "zh"`，可用「中文博主」或「中文」芯片筛出）：
+
+- @dotey、@op7418：原本就在名单里
+- @lijigang、@vista8、@oran_ge、@xiaohu、@jesselaunz、@Khazix0918、@berryxia：提示词哲学、工具实践、Agent / 快讯
+- @ZHO_ZHO_ZHO、@ring_hyacinth、@simonxxoo、@foxshuo、@dingyi：ComfyUI / AI 影像 / 画面提示 / 设计
+- @lxfater、@HiTw93：独立开发与 Claude Code / Agent 技能
+
+未编入：@Gorden_Sun（偏纯资讯日报）、@haibun（海辛实际账号是 @ring_hyacinth）、@iamluokai（未能可靠确认 X 主页）、@imxiaohu（官方互证指向 @xiaohu）。
+
+`hot` 和 `locale` 是给「今天最热」「英文博主」「中文博主」用的粗分类，不是实时热度。要改名单，编辑 [`src/data/creators.ts`](src/data/creators.ts)。
 
 ## 新增博主
 

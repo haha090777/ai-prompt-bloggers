@@ -63,6 +63,9 @@ export function CreatorDetail({
               >
                 {creator.sample ? "示例" : "真实账号"}
               </span>
+              {creator.locale === "zh" ? (
+                <span className="rounded-full bg-[#e8eef8] px-2 py-0.5 text-[11px] text-[#2a4a7a]">中文</span>
+              ) : null}
               {creator.source === "local" ? (
                 <span className="rounded-full bg-black/5 px-2 py-0.5 text-[11px] text-black/50">本地</span>
               ) : null}

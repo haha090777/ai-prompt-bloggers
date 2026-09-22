@@ -11,7 +11,7 @@ import { loadLibrary, saveLibrary } from "@/lib/storage";
 import { isTagId, sortTags, TAGS, type TagId } from "@/lib/tags";
 import type { Creator, DirectoryCreator } from "@/lib/types";
 
-const EXAMPLES = ["有爆款", "英文博主", "今天最热", "海报提示词", "UI 设计", "代码提示词"];
+const EXAMPLES = ["有爆款", "英文博主", "中文博主", "今天最热", "海报提示词", "UI 设计", "代码提示词"];
 
 type SearchPhase = "idle" | "local" | "jev";
 
@@ -284,14 +284,31 @@ export function Directory({ seed }: { seed: Creator[] }) {
           <button
             type="button"
             data-testid="tag-all"
-            aria-pressed={selected.length === 0}
-            onClick={() => setSelected([])}
+            aria-pressed={selected.length === 0 && !/中文|华语|国内/.test(query)}
+            onClick={() => {
+              setSelected([]);
+              if (/中文|华语|国内/.test(query)) setQuery("");
+            }}
             className={cx(
               "shrink-0 rounded-full px-3 py-1 text-sm",
-              selected.length === 0 ? "bg-[#1c1c1e] text-white" : "bg-white text-black/70 shadow-sm",
+              selected.length === 0 && !/中文|华语|国内/.test(query)
+                ? "bg-[#1c1c1e] text-white"
+                : "bg-white text-black/70 shadow-sm",
             )}
           >
             全部
+          </button>
+          <button
+            type="button"
+            data-testid="chip-zh"
+            aria-pressed={/中文|华语|国内/.test(query)}
+            onClick={() => setQuery((current) => (/中文|华语|国内/.test(current) ? "" : "中文博主"))}
+            className={cx(
+              "shrink-0 rounded-full px-3 py-1 text-sm",
+              /中文|华语|国内/.test(query) ? "bg-[#1c1c1e] text-white" : "bg-white text-black/70 shadow-sm",
+            )}
+          >
+            中文
           </button>
           {TAGS.map((tag) => {
             const on = selected.includes(tag.id);
